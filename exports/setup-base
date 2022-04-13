@@ -1,0 +1,31 @@
+module_install_dir=$1
+
+build_dir=${module_install_dir}/build
+gdal_install_dir=${module_install_dir}/gdal-3.4.2
+
+repro.require proj-dev master ${REPROS_DEV}
+repro.require python-dev master ${REPROS_DEV}
+
+sudo pip3 install numpy
+
+sudo apt-get update
+sudo apt -y install netcdf-bin libnetcdf-dev
+
+# download source for GDAL and install
+mkdir -p ${build_dir}
+cd ${build_dir}
+wget https://github.com/OSGeo/gdal/releases/download/v3.4.2/gdal-3.4.2.tar.gz
+gunzip gdal-3.4.2.tar.gz
+tar -xvvf gdal-3.4.2.tar
+cd ${build_dir}/gdal-3.4.2
+./configure --prefix=${gdal_install_dir} --with-python=$(which python3) \
+    --with-proj=/home/repro/repro-modules/proj-dev-master/proj-8.2.1
+make install
+
+rm -rf ${build_dir}
+
+repro.path ${gdal_install_dir}/bin
+repro.libpath ${gdal_install_dir}/lib
+
+repro.env GDAL_HOME ${gdal_install_dir}
+repro.env PYTHONPATH '${GDAL_HOME}/lib/python3/dist-packages/'
